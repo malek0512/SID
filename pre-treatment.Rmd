@@ -1,0 +1,54 @@
+---
+title: "SID - Percetron"
+output: html_document
+---
+
+**Pre treatment for breast.cancer.wisconsin.data database**
+```{r}
+filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+filename = "breast-cancer-wisconsin.data.txt"
+
+df <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+df = subset(df, V7!="?")          # on vire les ligne contenant des "?"
+df = subset(df, select = -c(V1))  # on vire la colonne 1
+
+df$V11 <- as.character(df$V11)      # transforme la derniere colone par 1 et -1
+df$V11[df$V11 == "2"] <- "1"
+df$V11[df$V11 == "4"] <- "-1"
+
+# on normalise la colonne v2
+#max = max(df)
+head(df)
+
+write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = ",")
+
+```
+
+
+**Pre treatment for ionosphere.data.txt database**
+Le fichier est deja normalisé, on remplace b par -1, et g par +1
+```{r}
+filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+filename = "ionosphere.data.txt"
+
+df <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+df$V35 <- as.character(df$V35)      # transforme la derniere colone par 1 et -1
+df$V35[df$V35 == "b"] <- "-1"
+df$V35[df$V35 == "g"] <- "1"
+
+head(df)
+
+write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE,  col.names = FALSE, sep = ",")
+```
+
+**Pre treatment for spambase.data database**
+
+```{r}
+filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+filename = "spambase.data.txt"
+
+df <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+
+head(df)
+
+```
