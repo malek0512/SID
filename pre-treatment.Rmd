@@ -11,6 +11,11 @@ Swap <- function(df) {
   columns <- c(columns[length(columns)], columns[1:(length(columns)-1)])
   return (df[, columns])
 }
+
+Write <- function(df, filepath, filename) {
+  write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+}
+
 ```
 
 **Pre treatment for breast.cancer.wisconsin.data database**
@@ -42,7 +47,7 @@ df <- Swap(df)
 
 head(df)
 
-write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = ",")
+Write(df, filepath, filename)
 
 ```
 
@@ -66,7 +71,7 @@ df <- Swap(df)
 
 head(df)
 
-write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE,  col.names = FALSE, sep = ",")
+Write(df, filepath, filename)
 ```
 
 **Pre treatment for spambase.data database**
@@ -93,5 +98,5 @@ df <- Swap(df)
 
 head(df)
 
-write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE,  col.names = FALSE, sep = ",")
+Write(df, filepath, filename)
 ```
