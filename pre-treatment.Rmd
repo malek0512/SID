@@ -8,16 +8,23 @@ output: html_document
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
 filename = "breast-cancer-wisconsin.data.txt"
 
-df <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+breast.cancer.wisconsin.data <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+df <- breast.cancer.wisconsin.data
 df = subset(df, V7!="?")          # on vire les ligne contenant des "?"
+df$V7 <- as.numeric(df$V7)        # on reconvertie en numeric
 df = subset(df, select = -c(V1))  # on vire la colonne 1
 
-df$V11 <- as.character(df$V11)      # transforme la derniere colone par 1 et -1
+df$V11 <- as.character(df$V11)    # transforme la derniere colone par 1 et -1
 df$V11[df$V11 == "2"] <- "1"
 df$V11[df$V11 == "4"] <- "-1"
+df$V11 <- as.numeric(df$V11)      # on reconvertie en numeric
 
-# on normalise la colonne v2
-#max = max(df)
+# on normalise les descripteurs en divisant par leur max
+for(column in names(df))
+{
+  df[column] <- df[column] / max(df[column])
+}
+
 head(df)
 
 write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = ",")
@@ -30,11 +37,13 @@ Le fichier est deja normalisé, on remplace b par -1, et g par +1
 ```{r}
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
 filename = "ionosphere.data.txt"
+ionosphere <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
 
-df <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+df <-ionosphere
 df$V35 <- as.character(df$V35)      # transforme la derniere colone par 1 et -1
 df$V35[df$V35 == "b"] <- "-1"
 df$V35[df$V35 == "g"] <- "1"
+df$V35 <- as.numeric(df$V35)      # on reconvertie en numeric
 
 head(df)
 
@@ -47,8 +56,20 @@ write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), se
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
 filename = "spambase.data.txt"
 
-df <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+spambase <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+df <-spambase
+df$V58 <- as.character(df$V58)      # transforme la derniere colone par 1 et -1
+df$V58[df$V58 == "1"] <- "-1"
+df$V58[df$V58 == "0"] <- "1"
+df$V58 <- as.numeric(df$V58)
+
+# on normalise les descripteurs en divisant par leur max
+for(column in names(df))
+{
+  df[column] <- df[column] / max(df[column])
+}
 
 head(df)
 
+write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE,  col.names = FALSE, sep = ",")
 ```
