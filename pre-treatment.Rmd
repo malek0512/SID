@@ -4,6 +4,7 @@ output: html_document
 ---
 
 **Pre treatment for breast.cancer.wisconsin.data database**
+On remplace 2 (bénigne) par +1 et 4 (maligne) par -1
 ```{r}
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
 filename = "breast-cancer-wisconsin.data.txt"
@@ -33,7 +34,7 @@ write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), se
 
 
 **Pre treatment for ionosphere.data database**
-Le fichier est deja normalisé, on remplace b par -1, et g par +1
+Le fichier est deja normalisé, on remplace b (bad) par -1, et g (good) par +1
 ```{r}
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
 filename = "ionosphere.data.txt"
@@ -42,7 +43,7 @@ ionosphere <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
 df <-ionosphere
 df$V35 <- as.character(df$V35)      # transforme la derniere colone par 1 et -1
 df$V35[df$V35 == "b"] <- "-1"
-df$V35[df$V35 == "g"] <- "1"
+df$V35[df$V35 == "g"] <- "1" 
 df$V35 <- as.numeric(df$V35)      # on reconvertie en numeric
 
 head(df)
@@ -51,7 +52,7 @@ write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), se
 ```
 
 **Pre treatment for spambase.data database**
-
+On remplace 1 (c'est un spam) par +1 et 0 (non un spam) par +1
 ```{r}
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
 filename = "spambase.data.txt"
