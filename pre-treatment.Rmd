@@ -25,7 +25,7 @@ write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), se
 ```
 
 
-**Pre treatment for ionosphere.data.txt database**
+**Pre treatment for ionosphere.data database**
 Le fichier est deja normalisé, on remplace b par -1, et g par +1
 ```{r}
 filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
