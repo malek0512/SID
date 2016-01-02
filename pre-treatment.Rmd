@@ -3,6 +3,16 @@ title: "SID - Percetron"
 output: html_document
 ---
 
+```{r}
+# Utils
+
+Swap <- function(df) {
+  columns <- names(df)
+  columns <- c(columns[length(columns)], columns[1:(length(columns)-1)])
+  return (df[, columns])
+}
+```
+
 **Pre treatment for breast.cancer.wisconsin.data database**
 On remplace 2 (bénigne) par +1 et 4 (maligne) par -1
 ```{r}
@@ -26,6 +36,10 @@ for(column in names(df))
   df[column] <- df[column] / max(df[column])
 }
 
+# swapping the last column to the first
+df <- Swap(df)
+
+
 head(df)
 
 write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = ",")
@@ -45,6 +59,10 @@ df$V35 <- as.character(df$V35)      # transforme la derniere colone par 1 et -1
 df$V35[df$V35 == "b"] <- "-1"
 df$V35[df$V35 == "g"] <- "1" 
 df$V35 <- as.numeric(df$V35)      # on reconvertie en numeric
+
+# swapping the last column to the first
+df <- Swap(df)
+
 
 head(df)
 
@@ -69,6 +87,9 @@ for(column in names(df))
 {
   df[column] <- df[column] / max(df[column])
 }
+
+# swapping the last column to the first
+df <- Swap(df)
 
 head(df)
 
