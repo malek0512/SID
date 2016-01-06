@@ -14,6 +14,12 @@ Swap <- function(df) {
 
 Write <- function(df, filepath, filename) {
   write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  percent = floor(0.75 * nrow(df))
+    write.table(df[1:percent,], file = paste(filepath, paste("treated-TRAIN", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  
+  dfp <- df[1:(nrow(df)-percent),]
+  dfp <- dfp[1:(nrow(df)-percent),]
+    write.table(dfp, file = paste(filepath, paste("treated-TEST", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
 }
 
 ```
@@ -21,7 +27,8 @@ Write <- function(df, filepath, filename) {
 **Pre treatment for breast.cancer.wisconsin.data database**
 On remplace 2 (bénigne) par +1 et 4 (maligne) par -1
 ```{r}
-filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+#filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+filepath = "/home/eudes/ricm5-1/sid/projet/SID"
 filename = "breast-cancer-wisconsin.data.txt"
 
 breast.cancer.wisconsin.data <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
@@ -100,3 +107,37 @@ head(df)
 
 Write(df, filepath, filename)
 ```
+
+
+```{r}
+evluate_model <- function (df) {
+  indexes <- seq(from = 1, to = nrow(df))
+  
+  for(i in 1:nrow(df))
+  {
+    index <- sample(indexes, 1)
+    indexes <- indexes[-index]
+    for(column in names(df))
+    {
+      vec <- df[column]
+      echantillon <- vec[index]
+        
+    }
+    
+  }
+}
+
+
+
+```
+
+```{r}
+perceptron_learn <- function(filename)
+{
+  cmd=paste("./perceptron/perceptron-learn", filename, "HEART-Train-vecteur" ,sep=' ')
+  system(cmd)
+}
+filename = "perceptron/example/HEART-Train"
+perceptron_learn(filename)
+```
+
