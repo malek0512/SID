@@ -1,0 +1,204 @@
+---
+title: "partie1"
+output: html_document
+---
+
+** Database normalisation**
+
+```{r}
+# Utils
+splitIn <- function(percentage = 0.75, df){
+  nb_rows <- nrow(df$X)
+  percent = floor(0.75 * nb_rows)
+
+  df$Ys <- list("1"=df$Y[1:percent,], "2"=df$Y[percent:nb_rows])
+  df$Xs <- list("1"=df$X[1:percent,], "2"=df$X[percent:nb_rows])
+  
+  return (df)
+}
+  
+Swap <- function(df) {
+  columns <- names(df)
+  columns <- columns[1:(length(columns)-1)]
+  
+  return (list(X=data.matrix(df[, columns]), Y=as.vector(df[, length(df)])))
+}
+
+getDataBase <- function(database) {
+  filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+  if (database == "breast.cancer")
+  {
+    # **Pre treatment for breast.cancer.wisconsin.data database**
+    # On remplace 2 (bénigne) par +1 et 4 (maligne) par -1
+    filename = "breast-cancer-wisconsin.data.txt"
+    
+    breast.cancer.wisconsin.data <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+    df <- breast.cancer.wisconsin.data
+    df = subset(df, V7!="?")          # on vire les ligne contenant des "?"
+    df$V7 <- as.numeric(df$V7)        # on reconvertie en numeric
+    df = subset(df, select = -c(V1))  # on vire la colonne 1
+    
+    df$V11 <- as.character(df$V11)    # transforme la derniere colone par 1 et -1
+    df$V11[df$V11 == "2"] <- "1"
+    df$V11[df$V11 == "4"] <- "-1"
+    df$V11 <- as.numeric(df$V11)      # on reconvertie en numeric
+    
+    # on normalise les descripteurs en divisant par leur max
+    for(column in names(df))
+    {
+      df[column] <- df[column] / max(df[column])
+    }
+    
+    return (Swap(df))  
+  } else if (database == "ionosphere")
+  {
+    #**Pre treatment for ionosphere.data database**
+    #Le fichier est deja normalisé, on remplace b (bad) par -1, et g (good) par +1
+    filename = "ionosphere.data.txt"
+    ionosphere <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+    
+    df <-ionosphere
+    df$V35 <- as.character(df$V35)      # transforme la derniere colone par 1 et -1
+    df$V35[df$V35 == "b"] <- "-1"
+    df$V35[df$V35 == "g"] <- "1" 
+    df$V35 <- as.numeric(df$V35)      # on reconvertie en numeric
+    
+    return (Swap(df))  
+  } else if (database == "spambase")
+  {
+    #**Pre treatment for spambase.data database**
+    #On remplace 1 (c'est un spam) par +1 et 0 (non un spam) par +1
+    filename = "spambase.data.txt"
+    
+    spambase <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
+    df <-spambase
+    df$V58 <- as.character(df$V58)      # transforme la derniere colone par 1 et -1
+    df$V58[df$V58 == "1"] <- "-1"
+    df$V58[df$V58 == "0"] <- "1"
+    df$V58 <- as.numeric(df$V58)
+    
+    # on normalise les descripteurs en divisant par leur max
+    for(column in names(df))
+    {
+      df[column] <- df[column] / max(df[column])
+    }
+    
+    return (Swap(df))  
+  }
+}
+
+#getDataBase(database = "breast.cancer")
+```
+
+**Perceptron algorithms**
+```{r}
+perceptron_learn <- function(T = 5000, eta = 0.1, X, Y) {
+  m <- nrow(X)
+  d <- ncol(X)
+  print(cat("Training set containing ", m, " examples in dimension ", d, "\n"))
+  # Initialisation of the weight vector
+  w0 <- 0
+  w <- array(data = 0, dim = d,dimnames = NULL)
+  t <- 0
+  
+  # While the maximum number of iterations is not reached do 
+  while (t <= T)
+  {
+    row <- round(runif(1, 1, m))
+    x <- X[row,]
+    y <- Y[row]
+    ps <- x %*% w
+    if ( y * ( ps + w0 ) <= 0 )
+    {
+      w0 <- w0 + eta * y
+      w <- w + eta * y * x
+    }
+    t <- t + 1
+  }
+  
+  return (list(w0=w0, w=w, t=t))
+}
+#learn <- perceptron_learn(df = getDataBase("breast.cancer"), X = df$X, Y = df$Y)
+
+validation_croisee <- function(df) {
+  
+}
+```
+
+```{r}
+perceptron_test <- function(df){
+  w <- df$w
+  X <- df$X
+  Y <- df$Y
+  h <- df$w0 + X %*% w
+  m <- nrow(X)
+  
+  PosPred=PosEffect=PosEffPred=Erreur=0.0
+  for(i in 1:m){
+    if(Y[i]*h[i] <= 0.0)
+      Erreur <- Erreur + 1.0
+    if(Y[i]==1.0){
+      PosEffect <- PosEffect + 1.0
+      if(h[i] > 0.0)
+        PosEffPred <- PosEffPred + 1.0
+    }
+    if(h[i] > 0.0)
+      PosPred <- PosPred + 1.0
+    
+  }
+    
+  Erreur <- Erreur / m
+  Precision <- PosEffPred / PosPred
+  Rappel <- PosEffPred / PosEffect
+  F <- 2.0 * Precision * Rappel / ( Precision + Rappel )
+  
+  print(cat("Precision:", Precision," Recall:",Rappel," F1-measure:",F," Error=",Erreur,"\n"))
+}
+
+perceptron_test(df = learn)
+```
+
+
+**Estimation du pas d'apprentissage, par validation croisée**
+
+```{r}
+etas = c(10^-5, 10^-4, 10^-3, 10^-2, 10^-1)
+databases = c("breast.cancer", "ionosphere", "spambase")
+
+for(db in databases) 
+{
+  df <- getDataBase(db);
+  df <- splitIn(percentage = 0.75, df = df)
+  
+  for(eta in etas)
+  {
+    equation <- perceptron_learn(eta = eta, X = df$Xs$"1", Y = df$Ys$"1")
+    df <- c(df, equation)
+    perceptron_test(df = df)
+  }
+}
+
+```
+
+
+```{r}
+evaluate_model <- function (df) {
+  indexes <- seq(from = 1, to = nrow(df))
+  
+  for(i in 1:nrow(df))
+  {
+    # on tire aleatoirement une valeur d'indice
+    index <- sample(indexes, 1)
+    indexes <- indexes[-index]
+    for(column in names(df))
+    {
+      value <- df[index, column]
+      
+    }
+    
+  }
+}
+
+
+
+```

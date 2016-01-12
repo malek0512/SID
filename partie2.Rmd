@@ -1,0 +1,21 @@
+---
+title: "Partie 2"
+output: html_document
+---
+
+```{r}
+x1 <- runif(30,-1,1)
+x2 <- runif(30,-1,1)
+x <- cbind(x1,x2)
+Y <- ifelse(x2>0.5+x1,+1,-1)
+plot(x,pch=ifelse(Y>0,"+","-"), xlim=c(-1,1),ylim=c(-1,1),cex=2)
+abline(0.5,1)
+points(c(0,0),c(0,0),pch=19)
+lines(c(0,-0.25),c(0,0.25),lty=2)
+arrows(-0.3,0.2,-0.4,0.3)
+text(-0.45,0.35,"w",cex=2)
+text(-0.0,0.15,"b",cex=2)
+d
+```
+
+

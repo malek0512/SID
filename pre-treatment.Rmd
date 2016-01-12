@@ -27,8 +27,8 @@ Write <- function(df, filepath, filename) {
 **Pre treatment for breast.cancer.wisconsin.data database**
 On remplace 2 (bénigne) par +1 et 4 (maligne) par -1
 ```{r}
-#filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
-filepath = "/home/eudes/ricm5-1/sid/projet/SID"
+filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+#filepath = "/home/eudes/ricm5-1/sid/projet/SID"
 filename = "breast-cancer-wisconsin.data.txt"
 
 breast.cancer.wisconsin.data <-read.table(paste(filepath, filename, sep = "/"), sep = ",")
@@ -110,18 +110,18 @@ Write(df, filepath, filename)
 
 
 ```{r}
-evluate_model <- function (df) {
+evaluate_model <- function (df) {
   indexes <- seq(from = 1, to = nrow(df))
   
   for(i in 1:nrow(df))
   {
+    # on tire aleatoirement une valeur d'indice
     index <- sample(indexes, 1)
     indexes <- indexes[-index]
     for(column in names(df))
     {
-      vec <- df[column]
-      echantillon <- vec[index]
-        
+      value <- df[index, column]
+      
     }
     
   }
