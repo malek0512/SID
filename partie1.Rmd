@@ -11,8 +11,8 @@ splitIn <- function(percentage = 0.75, df){
   nb_rows <- nrow(df$X)
   percent = floor(0.75 * nb_rows)
 
-  df$Ys <- list("1"=df$Y[1:percent,], "2"=df$Y[percent:nb_rows])
-  df$Xs <- list("1"=df$X[1:percent,], "2"=df$X[percent:nb_rows])
+  df$Ys <- list("1"=df$Y[1:percent], "2"=df$Y[percent:nb_rows])
+  df$Xs <- list("1"=df$X[1:percent,], "2"=df$X[percent:nb_rows,])
   
   return (df)
 }
@@ -25,7 +25,7 @@ Swap <- function(df) {
 }
 
 getDataBase <- function(database) {
-  filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+  filepath = "/home/eudes/ricm5-1/sid/projet/SID"
   if (database == "breast.cancer")
   {
     # **Pre treatment for breast.cancer.wisconsin.data database**
@@ -155,7 +155,7 @@ perceptron_test <- function(df){
   print(cat("Precision:", Precision," Recall:",Rappel," F1-measure:",F," Error=",Erreur,"\n"))
 }
 
-perceptron_test(df = learn)
+#perceptron_test(df = learn)
 ```
 
 
