@@ -126,11 +126,8 @@ validation_croisee <- function(df) {
 ```
 
 ```{r}
-perceptron_test <- function(df){
-  w <- df$w
-  X <- df$X
-  Y <- df$Y
-  h <- df$w0 + X %*% w
+perceptron_test <- function(X, Y, w, w0){
+  h <- w0 + X %*% w
   m <- nrow(X)
   
   PosPred=PosEffect=PosEffPred=Erreur=0.0
@@ -152,7 +149,7 @@ perceptron_test <- function(df){
   Rappel <- PosEffPred / PosEffect
   F <- 2.0 * Precision * Rappel / ( Precision + Rappel )
   
-  print(cat("Precision:", Precision," Recall:",Rappel," F1-measure:",F," Error=",Erreur,"\n"))
+  return (list(erreur=Erreur, precision = Precision, rappel= Rappel, f=F))
 }
 
 #perceptron_test(df = learn)
@@ -174,7 +171,7 @@ for(db in databases)
   {
     equation <- perceptron_learn(eta = eta, X = df$Xs$"1", Y = df$Ys$"1")
     df <- c(df, equation)
-    perceptron_test(df = df)
+    perceptron_test(df$Xs$"2",df$Ys$"2",df$w,df$w0)
   }
 }
 
@@ -183,20 +180,36 @@ for(db in databases)
 
 ```{r}
 evaluate_model <- function (df) {
-  indexes <- seq(from = 1, to = nrow(df))
-  
-  for(i in 1:nrow(df))
+  X <- df$X
+  Y <- df$Y
+  m <- nrow(X)
+  sequence <- seq(from = 1, to = m)
+  percent <- floor((1/5) * m)
+  for(t in 1:20)
   {
-    # on tire aleatoirement une valeur d'indice
-    index <- sample(indexes, 1)
-    indexes <- indexes[-index]
-    for(column in names(df))
+    errors<- c()
+    for(eta in etas)
     {
-      value <- df[index, column]
-      
+      estimations <- c()
+      for(i in 1:5)
+      {
+        # on tire aleatoirement 1/5  des indices
+        indexes <- sample(sequence, size = percent,replace = FALSE)
+        learn_4_5_X <- X[sequence[-indexes],]
+        learn_4_5_Y <- Y[sequence[-indexes],]
+        
+        test_1_5_X <- X[indexes,]
+        test_1_5_Y <- Y[indexes,]
+        
+        equation <- perceptron_learn(T = t, eta = eta, X = learn_4_5, Y = learn_4_5)
+        estimations[i] <- perceptron_test(X = test_1_5_X, Y = test_1_5_Y, equation$w,equation$w0)$erreur
+        
+      }
+      errors <- c(errors, mean(estimations))
     }
-    
+    best_eta_index <- min(errors)
   }
+
 }
 
 
