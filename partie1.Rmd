@@ -25,7 +25,9 @@ Swap <- function(df) {
 }
 
 getDataBase <- function(database) {
-  filepath = "/home/eudes/ricm5-1/sid/projet/SID"
+  #filepath = "/home/eudes/ricm5-1/sid/projet/SID"
+  #filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+  filepath = "."
   if (database == "breast.cancer")
   {
     # **Pre treatment for breast.cancer.wisconsin.data database**
@@ -95,7 +97,7 @@ getDataBase <- function(database) {
 perceptron_learn <- function(T = 5000, eta = 0.1, X, Y) {
   m <- nrow(X)
   d <- ncol(X)
-  print(cat("Training set containing ", m, " examples in dimension ", d, "\n"))
+  #print(cat("Training set containing ", m, " examples in dimension ", d, "\n"))
   # Initialisation of the weight vector
   w0 <- 0
   w <- array(data = 0, dim = d,dimnames = NULL)
@@ -120,9 +122,6 @@ perceptron_learn <- function(T = 5000, eta = 0.1, X, Y) {
 }
 #learn <- perceptron_learn(df = getDataBase("breast.cancer"), X = df$X, Y = df$Y)
 
-validation_croisee <- function(df) {
-  
-}
 ```
 
 ```{r}
@@ -180,38 +179,56 @@ for(db in databases)
 
 ```{r}
 evaluate_model <- function (df) {
-  X <- df$X
-  Y <- df$Y
+  
+  # creating St and Tt databases
+  dftmp <- splitIn(percentage = 0.75, df = df)
+  St <- list(X = dftmp$Xs$"1", Y = dftmp$Ys$"1")
+  Tt <- list(X = dftmp$Xs$"2", Y = dftmp$Ys$"2")
+  etas <- c(10^-5, 10^-4, 10^-3, 10^-2, 10^-1)  
+  
+  X <- St$X
+  Y <- St$Y
   m <- nrow(X)
   sequence <- seq(from = 1, to = m)
   percent <- floor((1/5) * m)
+  error_estimations = c()
+  result <- list()
+  
   for(t in 1:20)
   {
+    # looking for the best eta
     errors<- c()
     for(eta in etas)
     {
       estimations <- c()
       for(i in 1:5)
       {
-        # on tire aleatoirement 1/5  des indices
+        # on tire aleatoirement 1/5  des indices sans remise
         indexes <- sample(sequence, size = percent,replace = FALSE)
         learn_4_5_X <- X[sequence[-indexes],]
-        learn_4_5_Y <- Y[sequence[-indexes],]
+        learn_4_5_Y <- Y[sequence[-indexes]]
         
         test_1_5_X <- X[indexes,]
-        test_1_5_Y <- Y[indexes,]
+        test_1_5_Y <- Y[indexes]
         
-        equation <- perceptron_learn(T = t, eta = eta, X = learn_4_5, Y = learn_4_5)
+        equation <- perceptron_learn(T = 5000, eta = eta, X = learn_4_5_X, Y = learn_4_5_Y)
         estimations[i] <- perceptron_test(X = test_1_5_X, Y = test_1_5_Y, equation$w,equation$w0)$erreur
         
       }
       errors <- c(errors, mean(estimations))
     }
-    best_eta_index <- min(errors)
+    best_eta <- etas[which.min(errors)]
+    
+    #apprentissage du model a partir de best_eta
+    equation <- perceptron_learn(T = t, eta = best_eta, X = learn_4_5_X, Y = learn_4_5_X)
+    error_estimations[t] <- perceptron_test(X = Tt$X, Y = Tt$Y, equation$w,equation$w0)$erreur
   }
-
+  mean_error_estimation = mean(error_estimations)
+  return (mean_error_estimation)
 }
 
-
+evaluate_model(getDataBase(database = "breast.cancer"))
 
 ```
+
+
