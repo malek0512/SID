@@ -11,8 +11,8 @@ splitIn <- function(percentage = 0.75, df){
   nb_rows <- nrow(df$X)
   percent = floor(0.75 * nb_rows)
 
-  df$Ys <- list("1"=df$Y[1:percent], "2"=df$Y[percent:nb_rows])
-  df$Xs <- list("1"=df$X[1:percent,], "2"=df$X[percent:nb_rows,])
+  df$Ys <- list("1"=df$Y[1:percent], "2"=df$Y[(percent+1):nb_rows])
+  df$Xs <- list("1"=df$X[1:percent,], "2"=df$X[(percent+1):nb_rows,])
   
   return (df)
 }
@@ -118,19 +118,23 @@ perceptron_learn <- function(T = 5000, eta = 0.1, X, Y) {
     t <- t + 1
   }
   
-  return (list(w0=w0, w=w, t=t))
+  return (list(w0=w0, w=w))
 }
 #learn <- perceptron_learn(df = getDataBase("breast.cancer"), X = df$X, Y = df$Y)
 
 ```
 
 ```{r}
-perceptron_test <- function(X, Y, w, w0){
+model_test <- function(X, Y, w, w0){
+  #print(X)
+  #print(w)
   h <- w0 + X %*% w
-  m <- nrow(X)
-  
+  #m <- nrow(X)
+  m <- length(Y)
+
   PosPred=PosEffect=PosEffPred=Erreur=0.0
   for(i in 1:m){
+    
     if(Y[i]*h[i] <= 0.0)
       Erreur <- Erreur + 1.0
     if(Y[i]==1.0){
@@ -148,7 +152,7 @@ perceptron_test <- function(X, Y, w, w0){
   Rappel <- PosEffPred / PosEffect
   F <- 2.0 * Precision * Rappel / ( Precision + Rappel )
   
-  return (list(erreur=Erreur, precision = Precision, rappel= Rappel, f=F))
+  return (list(erreur=Erreur, precision = Precision, rappel= Rappel, f=F, h=h))
 }
 
 #perceptron_test(df = learn)
@@ -158,42 +162,28 @@ perceptron_test <- function(X, Y, w, w0){
 **Estimation du pas d'apprentissage, par validation croisée**
 
 ```{r}
-etas = c(10^-5, 10^-4, 10^-3, 10^-2, 10^-1)
-databases = c("breast.cancer", "ionosphere", "spambase")
+# we set a seed for the random generator
+#set.seed(10);
 
-for(db in databases) 
-{
-  df <- getDataBase(db);
-  df <- splitIn(percentage = 0.75, df = df)
-  
-  for(eta in etas)
-  {
-    equation <- perceptron_learn(eta = eta, X = df$Xs$"1", Y = df$Ys$"1")
-    df <- c(df, equation)
-    perceptron_test(df$Xs$"2",df$Ys$"2",df$w,df$w0)
-  }
-}
+evaluate_model <- function (df = NULL, model = perceptron_learn, model_test = model_test) {
+  # constantes
+  etas <- c(10^-5, 10^-4, 10^-3, 10^-2, 10^-1)
+  model_loop = 3
 
-```
-
-
-```{r}
-evaluate_model <- function (df) {
-  
   # creating St and Tt databases
   dftmp <- splitIn(percentage = 0.75, df = df)
   St <- list(X = dftmp$Xs$"1", Y = dftmp$Ys$"1")
   Tt <- list(X = dftmp$Xs$"2", Y = dftmp$Ys$"2")
-  etas <- c(10^-5, 10^-4, 10^-3, 10^-2, 10^-1)  
   
+  # variables for model evaluation
   X <- St$X
   Y <- St$Y
   m <- nrow(X)
   sequence <- seq(from = 1, to = m)
   percent <- floor((1/5) * m)
   error_estimations = c()
-  result <- list()
-  
+  #result <- list()
+  #result2 <- list()
   for(t in 1:20)
   {
     # looking for the best eta
@@ -201,33 +191,41 @@ evaluate_model <- function (df) {
     for(eta in etas)
     {
       estimations <- c()
+      # cross validation pour un eta donné
       for(i in 1:5)
       {
         # on tire aleatoirement 1/5  des indices sans remise
         indexes <- sample(sequence, size = percent,replace = FALSE)
-        learn_4_5_X <- X[sequence[-indexes],]
-        learn_4_5_Y <- Y[sequence[-indexes]]
+        complementaire <- sequence[-indexes]
+        learn_4_5_X <- X[complementaire,]
+        learn_4_5_Y <- Y[complementaire]
         
         test_1_5_X <- X[indexes,]
         test_1_5_Y <- Y[indexes]
         
-        equation <- perceptron_learn(T = 5000, eta = eta, X = learn_4_5_X, Y = learn_4_5_Y)
-        estimations[i] <- perceptron_test(X = test_1_5_X, Y = test_1_5_Y, equation$w,equation$w0)$erreur
-        
+        equation <- model(T = model_loop, eta = eta, X = learn_4_5_X, Y = learn_4_5_Y)
+        estimations[i] <- model_test(X = test_1_5_X, Y = test_1_5_Y, w = equation$w, w0 = equation$w0)$erreur
       }
+      #result <- rbind(result, data.frame(iter=t, eta=eta, error_mean=mean(estimations)))
       errors <- c(errors, mean(estimations))
     }
     best_eta <- etas[which.min(errors)]
     
+    ############################################
     #apprentissage du model a partir de best_eta
-    equation <- perceptron_learn(T = t, eta = best_eta, X = learn_4_5_X, Y = learn_4_5_X)
-    error_estimations[t] <- perceptron_test(X = Tt$X, Y = Tt$Y, equation$w,equation$w0)$erreur
+    equation <- model(T = model_loop, eta = best_eta, X = St$X, Y = St$Y)
+    test_result <- model_test(X = Tt$X, Y = Tt$Y, w = equation$w, w0 = equation$w0)
+    
+    #result2 = rbind(result2, data.frame(iter = t, equation$w[1], best_eta = best_eta, test_result$h, Tt$Y, test_result$erreur))
+    #error_estimations[t] <- model_test(X = Tt$X, Y = Tt$Y, equation$w,equation$w0)$erreur
+    error_estimations[t] <- test_result$erreur
   }
+  
   mean_error_estimation = mean(error_estimations)
-  return (mean_error_estimation)
+  return (list(mean_error_estimation = mean_error_estimation)) #, df = result2
 }
 
-evaluate_model(getDataBase(database = "breast.cancer"))
+evaluate_model(df = getDataBase(database = "breast.cancer"), model = perceptron_learn, model_test = model_test)
 
 ```
 
