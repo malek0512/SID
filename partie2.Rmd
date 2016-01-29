@@ -3,19 +3,73 @@ title: "Partie 2"
 output: html_document
 ---
 
+*Partie 2 du TP*
+
+Regression logistique
+
 ```{r}
-x1 <- runif(30,-1,1)
-x2 <- runif(30,-1,1)
-x <- cbind(x1,x2)
-Y <- ifelse(x2>0.5+x1,+1,-1)
-plot(x,pch=ifelse(Y>0,"+","-"), xlim=c(-1,1),ylim=c(-1,1),cex=2)
-abline(0.5,1)
-points(c(0,0),c(0,0),pch=19)
-lines(c(0,-0.25),c(0,0.25),lty=2)
-arrows(-0.3,0.2,-0.4,0.3)
-text(-0.45,0.35,"w",cex=2)
-text(-0.0,0.15,"b",cex=2)
-d
+Hw <- function(X, w, w0) {return (X %*% w + w0) }
+Rm <- function(X, Y, w, w0) { return (mean(log2( 1 + exp( -Y * Hw(X, w, w0)))))}
+Gradient <- function(X, Y, w, w0) {return (-mean(Y * (1 - (1/(1+exp(-Y*Hw(X, w, w0)))) ) * X ))}
+
+#Rm(df$X, df$Y, abs(df$Y)[1:9], 0)
+regression_logistique <- function(T = 5000, eta = 1.0, precision = 0.1, X, Y) {
+  m <- nrow(X)
+  d <- ncol(X)
+  # Initialisation of the weight vector
+  w0 <- 0
+  #w <- array(data = 0, dim = d,dimnames = NULL)
+  w <- runif(n = d, min = 0, max = d)
+  t <- 0
+  Rold <- 1
+  Rnew <- 0
+  
+  # While the maximum number of iterations is not reached do 
+  while ( abs( Rnew - Rold ) > precision )
+  {
+    Rold <- Rm(X = X, Y = Y, w = w, w0 = w0)
+    
+    gradient <- Gradient(X, Y, w, w0)
+    w <- w - eta * gradient * Rm(X = X, Y = Y, w = w, w0 = w0)
+    w0 <- w0 - eta * 
+    Rnew <- Rm(X = X, Y = Y, w = w, w0 = w0)
+      
+    t <- t + 1
+  }
+  
+  return (list(w0=w0, w=w))
+}
+```
+
+
+```{r}
+# Adaboost
+adaboost <- function(T = 5000, X, Y){
+  m <- length(Y)
+  D <- array(data = 1/m, dim = d,dimnames = NULL)
+  df <- data.frame()
+  
+  for (i in 1:T) 
+  {
+    #apprendre un classifieur faible en utilisant Dt
+    hw <- function(X, w, w0) {return (X %*% w + w0) }
+    
+    errort <- 0
+    for (i in 1:m) 
+      error <- error + (if ( X[i,] %*% w + w0 != Y[i] ) D[i] else 0)
+    
+    alphat <- log2((1-errort)/errort) / 2
+    
+    #maj des poids
+    Zt <- sum(D * exp(-alphat * Y * hw(X)))
+    D <- (D * exp(-alphat * Y * hw(X))) / Zt
+
+    equation <- list(w = w, w0 = w0)
+    df = rbind(df, data.frame(alpha = alphat, equation = equation))
+  }
+  #Hw <- 
+}
+
 ```
 
 

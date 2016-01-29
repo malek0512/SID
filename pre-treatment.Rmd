@@ -14,6 +14,7 @@ Swap <- function(df) {
 
 Write <- function(df, filepath, filename) {
   write.table(df, file = paste(filepath, paste("treated", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  
   percent = floor(0.75 * nrow(df))
     write.table(df[1:percent,], file = paste(filepath, paste("treated-TRAIN", filename, sep = "-"), sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
   
@@ -27,7 +28,8 @@ Write <- function(df, filepath, filename) {
 **Pre treatment for breast.cancer.wisconsin.data database**
 On remplace 2 (bénigne) par +1 et 4 (maligne) par -1
 ```{r}
-filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+#filepath = "/media/mammar/5766C1AE34748499/work/SID/TP-Perceptron"
+filepath = "."
 #filepath = "/home/eudes/ricm5-1/sid/projet/SID"
 filename = "breast-cancer-wisconsin.data.txt"
 
@@ -132,7 +134,7 @@ evaluate_model <- function (df) {
 ```
 
 ```{r}
-perceptron_learn <- function(filename)
+learn <- function(filename)
 {
   cmd=paste("./perceptron/perceptron-learn", filename, "HEART-Train-vecteur" ,sep=' ')
   system(cmd)
@@ -141,3 +143,65 @@ filename = "perceptron/example/HEART-Train"
 perceptron_learn(filename)
 ```
 
+```{r}
+
+databases = c("treated-breast-cancer-wisconsin.data.txt", "treated-ionosphere.data.txt", "treated-spambase.data.txt")
+databases_train = c("treated-TRAIN-breast-cancer-wisconsin.data.txt", "treated-TRAIN-ionosphere.data.txt", "treated-TRAIN-spambase.data.txt")
+databases_test = c("treated-TEST-breast-cancer-wisconsin.data.txt", "treated-TEST-ionosphere.data.txt", "treated-TEST-spambase.data.txt")
+
+Logistique_prof <- function(precision=1e-4, df) {
+  filename = "logistic-data"
+  resultname = "logistic-result"
+  filepath = "."
+  
+  executable = "./LogisticRegression/LogisticRegression-learn"
+  params = paste("-e", precision, sep = " ")
+  
+  #writeToDisk
+  df <- data.frame(cbind(df$Y, df$X))
+  write.table(df, file = paste(filepath, filename, sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  
+  #execution
+  cmd=paste(executable, params, filename,  resultname, sep=' ')
+  system(cmd)
+  
+  #reading the result
+  data <- read.table(paste(filepath, resultname, sep = "/"), sep = " ")
+  #data[!is.na(data)]
+  
+  w0 <- data[1]
+  w <- data[c(-1, -ncol(data))]  
+  
+  return (list(w=data.matrix(w)[1,], w0=w0[1,1]))
+}
+
+Adaboost <- function(max_iterations = 100, df) {
+  
+  filename = "adaboost-data"
+  resultname = "adaboost-result"
+  filepath = "."
+  
+  executable = "./AdaBoost/AdaBoost-learn"
+  params = paste("-t", max_iterations, sep = " ")
+  
+  #writeToDisk
+  df <- data.frame(cbind(df$Y, df$X))
+  write.table(df, file = paste(filepath, filename, sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  
+  #execution
+  cmd=paste(executable, params, filename,  resultname, sep=' ')
+  system(cmd)
+  
+  #reading the result
+  data <- read.table(paste(filepath, resultname, sep = "/"), sep = " ")
+  data <- data[, 1:(ncol(data)-1)]
+  
+  #on a une liste de vecteurs sous la forme : alpha, w0, w ...
+  #on multiple chaque w0(i) et w(i) par le alpha(i), et on somme les w0 = sum(w0(i)) et w = sum(w(i))
+  data <- data[,1] * data[,2:ncol(df)]
+  data <- colSums(data)
+  
+  return (list(w0 = data[1], w=data[-1]))
+}
+
+```

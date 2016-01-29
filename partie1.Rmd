@@ -8,9 +8,9 @@ output: html_document
 ```{r}
 # Utils
 splitIn <- function(percentage = 0.75, df){
-  nb_rows <- nrow(df$X)
-  percent = floor(0.75 * nb_rows)
-
+  nb_rows <- length(df$Y)
+  percent = floor(percentage * nb_rows)
+  
   df$Ys <- list("1"=df$Y[1:percent], "2"=df$Y[(percent+1):nb_rows])
   df$Xs <- list("1"=df$X[1:percent,], "2"=df$X[(percent+1):nb_rows,])
   
@@ -20,6 +20,12 @@ splitIn <- function(percentage = 0.75, df){
 Swap <- function(df) {
   columns <- names(df)
   columns <- columns[1:(length(columns)-1)]
+  
+  return (list(X=data.matrix(df[, columns]), Y=as.vector(df[, length(df)])))
+}
+
+SwapInv <- function(df) {
+  df <- data.frame(cbind(df$Y, df$X))
   
   return (list(X=data.matrix(df[, columns]), Y=as.vector(df[, length(df)])))
 }
@@ -92,12 +98,11 @@ getDataBase <- function(database) {
 #getDataBase(database = "breast.cancer")
 ```
 
-**Perceptron algorithms**
+**Models algorithms**
 ```{r}
-perceptron_learn <- function(T = 5000, eta = 0.1, X, Y) {
+perceptron <- function(T = 5000, eta = 0.1, X, Y) {
   m <- nrow(X)
   d <- ncol(X)
-  #print(cat("Training set containing ", m, " examples in dimension ", d, "\n"))
   # Initialisation of the weight vector
   w0 <- 0
   w <- array(data = 0, dim = d,dimnames = NULL)
@@ -120,14 +125,93 @@ perceptron_learn <- function(T = 5000, eta = 0.1, X, Y) {
   
   return (list(w0=w0, w=w))
 }
-#learn <- perceptron_learn(df = getDataBase("breast.cancer"), X = df$X, Y = df$Y)
 
+adaline <- function(T = 5000, eta = 0.1, X, Y) {
+  m <- nrow(X)
+  d <- ncol(X)
+  # Initialisation of the weight vector
+  w0 <- 0
+  w <- array(data = 0, dim = d,dimnames = NULL)
+  t <- 0
+  
+  # While the maximum number of iterations is not reached do 
+  while (t <= T)
+  {
+    row <- round(runif(1, 1, m))
+    x <- X[row,]
+    y <- Y[row]
+    
+    hw <- (x %*% w + w0)[1,1]
+    
+    w0 <- w0 + eta * (y - hw)
+    w <- w + eta * x * (y - hw)
+    
+    t <- t + 1
+  }
+  
+  return (list(w0=w0, w=w))
+}
+
+Logistique_prof <- function(T = "fake_parameter", eta = "fake_parameter", precision=1e-4, X, Y) {
+  filename = "logistic-data"
+  resultname = "logistic-result"
+  filepath = "."
+  
+  executable = "./LogisticRegression/LogisticRegression-learn"
+  params = paste("-e", precision, sep = " ")
+  
+  #writeToDisk
+  df <- data.frame(cbind(Y, X))
+  write.table(df, file = paste(filepath, filename, sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  
+  #execution
+  cmd=paste(executable, params, filename,  resultname, sep=' ')
+  system(cmd, ignore.stdout = TRUE)
+  
+  #reading the result
+  data <- read.table(paste(filepath, resultname, sep = "/"), sep = " ")
+  #data[!is.na(data)]
+  
+  w0 <- data[1]
+  w <- data[c(-1, -ncol(data))]  
+  
+  return (list(w=data.matrix(w)[1,], w0=w0[1,1]))
+}
+
+Adaboost_prof <- function(T = "fake_parameter", eta = "fake_parameter", max_iterations = 100, X, Y) {
+  
+  filename = "adaboost-data"
+  resultname = "adaboost-result"
+  filepath = "."
+  
+  executable = "./AdaBoost/AdaBoost-learn"
+  params = paste("-t", max_iterations, sep = " ")
+  
+  #writeToDisk
+  df <- data.frame(cbind(Y, X))
+  write.table(df, file = paste(filepath, filename, sep = "/"), quote = FALSE, row.names = FALSE, col.names = FALSE, sep = " ")
+  
+  #execution
+  cmd=paste(executable, params, filename,  resultname, sep=' ')
+  system(cmd, ignore.stdout = TRUE)
+  
+  #reading the result
+  data <- read.table(paste(filepath, resultname, sep = "/"), sep = " ")
+  data <- data[, 1:(ncol(data)-1)]
+  
+  #on a une liste de vecteurs sous la forme : alpha, w0, w ...
+  #on multiple chaque w0(i) et w(i) par le alpha(i), et on somme les w0 = sum(w0(i)) et w = sum(w(i))
+  data <- data[,1] * data[,2:ncol(data)]
+  data <- colSums(data)
+  
+  
+  return (list(w0 = data[1], w=data[-1]))
+}
 ```
+
 
 ```{r}
 model_test <- function(X, Y, w, w0){
-  #print(X)
-  #print(w)
   h <- w0 + X %*% w
   #m <- nrow(X)
   m <- length(Y)
@@ -163,12 +247,12 @@ model_test <- function(X, Y, w, w0){
 
 ```{r}
 # we set a seed for the random generator
-#set.seed(10);
+set.seed(10);
 
-evaluate_model <- function (df = NULL, model = perceptron_learn, model_test = model_test) {
+evaluate_model <- function (df = NULL, model = perceptron, model_test = model_test) {
   # constantes
   etas <- c(10^-5, 10^-4, 10^-3, 10^-2, 10^-1)
-  model_loop = 3
+  model_loop = 5000
 
   # creating St and Tt databases
   dftmp <- splitIn(percentage = 0.75, df = df)
@@ -190,6 +274,12 @@ evaluate_model <- function (df = NULL, model = perceptron_learn, model_test = mo
     errors<- c()
     for(eta in etas)
     {
+      if (identical(model, Adaboost_prof) | identical(model, Logistique_prof)) 
+      {
+        errors = etas
+        break;
+      }
+      
       estimations <- c()
       # cross validation pour un eta donné
       for(i in 1:5)
@@ -225,8 +315,60 @@ evaluate_model <- function (df = NULL, model = perceptron_learn, model_test = mo
   return (list(mean_error_estimation = mean_error_estimation)) #, df = result2
 }
 
-evaluate_model(df = getDataBase(database = "breast.cancer"), model = perceptron_learn, model_test = model_test)
+#evaluate_model(df = getDataBase(database = "breast.cancer"), model = perceptron, model_test = model_test)
 
 ```
 
+Nous allons à présent comparer les performances des modèles Adaline et Perceptron sur les 3 bases de données UCI (préalablement normalisées) : 
 
+```{r}
+
+
+uci = c("breast.cancer", "ionosphere", "spambase")
+models = c("perceptron", "adaline", "Logistique_prof", "Adaboost_prof")
+#models = c("Adaboost_prof", "Logistique_prof")
+#models = c("Logistique_prof")
+#models = c("Adaboost_prof")
+data = data.frame()
+for(model in models) 
+{
+  set.seed(42)
+  for(database in uci)
+  {
+    print(model)
+    res = evaluate_model(df = getDataBase(database = database), model = get(model), model_test = model_test)
+    data = rbind(data, data.frame(model, database, error = res$mean_error_estimation))
+  }  
+}
+
+data
+```
+
+Nous remarquons que Adaline est plus performant que perceptron sur l'ensemble des bases UCI
+       model      database      error
+1 perceptron breast.cancer 0.03157895
+2 perceptron    ionosphere 0.11363636
+3 perceptron      spambase 0.30525630
+4    adaline breast.cancer 0.01140351
+5    adaline    ionosphere 0.04034091
+6    adaline      spambase 0.18731538
+
+data
+       model      database      error
+1 perceptron breast.cancer 0.02631579
+2 perceptron    ionosphere 0.10625000
+3 perceptron      spambase 0.35838401
+4    adaline breast.cancer 0.01754386
+5    adaline    ionosphere 0.03465909
+6    adaline      spambase 0.23788010
+            model      database      error
+1 Logistique_prof breast.cancer 0.00994152
+2 Logistique_prof    ionosphere 0.06818182
+3 Logistique_prof      spambase 0.14952215
+
+          model      database       error
+1 Adaboost_prof breast.cancer 0.005847953
+2 Adaboost_prof    ionosphere 0.022727273
+3 Adaboost_prof      spambase 0.167680278
+
+En effet comme ceci à pu être étudié en cours adaline propose une meilleurs minimisation du risque empirique
