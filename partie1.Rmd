@@ -373,7 +373,7 @@ models = c("perceptron", "adaline", "regression_logistique", "Adaboost_prof")
 #models = c("Adaboost_prof", "Logistique_prof")
 #models = c("regression_logistique")
 #models = c("perceptron")
-models = c("Adaboost_prof")
+#models = c("Adaboost_prof")
 data = data.frame()
 for(model in models) 
 {
