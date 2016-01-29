@@ -391,26 +391,36 @@ data
 ggplot(data, aes(model, error, fill=model)) + geom_bar(stat = "identity") + facet_grid(. ~ database)
 ```
 
-Nous remarquons que Adaline est plus performant que perceptron sur l'ensemble des bases UCI
-data
-                   model      database   eta       error
-1             perceptron breast.cancer 1e-01 0.026315789
-2             perceptron    ionosphere 1e-02 0.106250000
-3             perceptron      spambase 1e-03 0.358384014
-4                adaline breast.cancer 1e-01 0.020760234
-5                adaline    ionosphere 1e-03 0.039204545
-6                adaline      spambase 1e-01 0.240225891
-7  regression_logistique breast.cancer 1e-04 0.222222222
-8  regression_logistique    ionosphere 1e-05 0.049431818
-9  regression_logistique      spambase 1e-04 0.001433536
-10         Adaboost_prof breast.cancer 1e-02 0.010233918
-11         Adaboost_prof    ionosphere 1e-02 0.021022727
-12         Adaboost_prof      spambase 1e-04 0.109556907
+```{r}
+library("plyr")
+res = data.frame()
+for(database in uci)
+{
+    df = getDataBase(database = database)
+    res = rbind(res, data.frame(database=database, count=length(df$Y)))
+}
+res
+```
+
+Résultat de la simulation : 
+---------------------------
+                   model      database   eta      error
+1             perceptron breast.cancer 1e-01 0.02631579
+2             perceptron    ionosphere 1e-02 0.10625000
+3             perceptron      spambase 1e-03 0.35838401
+4                adaline breast.cancer 1e-01 0.02076023
+5                adaline    ionosphere 1e-03 0.03920455
+6                adaline      spambase 1e-01 0.24022589
+7  regression_logistique breast.cancer 1e-04 0.03222222
+8  regression_logistique    ionosphere 1e-05 0.04943182
+9  regression_logistique      spambase 1e-04 0.38335360
+10         Adaboost_prof breast.cancer 1e-02 0.01023392
+11         Adaboost_prof    ionosphere 1e-02 0.02102273
+12         Adaboost_prof      spambase 1e-04 0.10955691
 
 ```{r}
 # Graphe a générer
-ggplot(data, aes(model, error, fill=model)) + geom_bar(stat = "identity") + facet_grid(. ~ database)
-
+library("ggplot2")
+data <- read.table(paste(".", "result", sep = "/"), sep = " ", header = TRUE)
+ggplot(data, aes(model, error, fill=model)) + geom_bar(stat = "identity") + facet_grid(. ~ database) + geom_point(aes(y=eta), size=2, color="red", )
 ```
-
-En effet comme ceci à pu être étudié en cours adaline propose une meilleurs minimisation du risque empirique
