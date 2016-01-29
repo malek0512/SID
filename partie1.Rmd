@@ -387,6 +387,8 @@ for(model in models)
 }
 
 data
+
+ggplot(data, aes(model, error, fill=model)) + geom_bar(stat = "identity") + facet_grid(. ~ database)
 ```
 
 Nous remarquons que Adaline est plus performant que perceptron sur l'ensemble des bases UCI
