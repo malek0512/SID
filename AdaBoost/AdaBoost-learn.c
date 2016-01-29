@@ -109,12 +109,15 @@ LR_PARAM input_params;
     DistUniforme(Dt, TrainSet.m);
     Echantillonnage(Dt, TrainSet, Echantillon);
     ss_input_params.eps=1e-4;
-	ss_input_params.T=5000;
-	ss_input_params.display=0;
-    ss_input_params.eta=0.1;
+	  ss_input_params.T= 5000;
+	  ss_input_params.display=0;
+    ss_input_params.eta=input_params.eta; //0.1
+    printf("oui %lf\n",input_params.eta);
     for(t=1; t<=input_params.T && err<0.5; t++)
     {
-        RegressionLogistique(W[t],Echantillon,ss_input_params);
+        //RegressionLogistique(W[t],Echantillon,ss_input_params);
+        perceptron(W[t], Echantillon, ss_input_params);
+
         for(i=1; i<=TrainSet.m; i++)
        /*@$\rhd h_t(\mathbf{x}_i)\leftarrow w^{(t)}_0+\left\langle \boldsymbol w^{(t)},\mathbf{x}_i\right\rangle$@*/
         for(h[i]=W[t][0], j=1; j<=TrainSet.d; j++)

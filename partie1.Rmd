@@ -178,14 +178,58 @@ Logistique_prof <- function(T = "fake_parameter", eta = "fake_parameter", precis
   return (list(w=data.matrix(w)[1,], w0=w0[1,1]))
 }
 
-Adaboost_prof <- function(T = "fake_parameter", eta = "fake_parameter", max_iterations = 100, X, Y) {
+regression_logistique <- function(T = 5000, eta = 1.0, precision = 0.1, X, Y) {
+  Hw <- function(X, w, w0) {return (X %*% w + w0) }
+  Rm <- function(X, Y, w, w0) { return (mean(log2( 1 + exp( -Y * Hw(X, w, w0)))))}
+  Gradient <- function(X, Y, w, w0) {
+    d <- ncol(X)
+    grad = c()
+    #Hw <- function(x, w, w0) {return (x %*% w + w0) }
+    for(j in 1:d)
+    {
+      grad[j] <- mean(-Y*X[,j]*(1-(1/(1+exp(-Y * Hw(X = X, w = w, w0 = w0))))))
+    }
+    
+    return (grad)
+  }
+
+  m <- nrow(X)
+  d <- ncol(X)
+  # Initialisation of the weight vector
+  w0 <- 0
+  #w <- array(data = 0, dim = d,dimnames = NULL)
+  w <- runif(n = d, min = 0, max = d)
+  t <- 0
+  Rold <- 1
+  Rnew <- 0
+  
+  # While the maximum number of iterations is not reached do 
+  while ( abs( Rnew - Rold ) > precision )
+  {
+    Rold <- Rm(X = X, Y = Y, w = w, w0 = w0)
+    
+    gradient <- Gradient(X, Y, w, w0)
+
+    w <- w - eta * gradient
+    w0 <- w0 - eta * mean(-Y*(1-(1/(1+exp(-Y * Hw(X = X, w = w, w0 = w0))))))
+    
+    Rnew <- Rm(X = X, Y = Y, w = w, w0 = w0)
+      
+    t <- t + 1
+    
+  }
+  
+  return (list(w0=w0, w=w))
+}
+
+Adaboost_prof <- function(T = "fake_parameter", eta = 0.1, max_iterations = 100, X, Y) {
   
   filename = "adaboost-data"
   resultname = "adaboost-result"
   filepath = "."
   
   executable = "./AdaBoost/AdaBoost-learn"
-  params = paste("-t", max_iterations, sep = " ")
+  params = paste("-e", eta, "-t", max_iterations, sep = " ")
   
   #writeToDisk
   df <- data.frame(cbind(Y, X))
@@ -274,7 +318,7 @@ evaluate_model <- function (df = NULL, model = perceptron, model_test = model_te
     errors<- c()
     for(eta in etas)
     {
-      if (identical(model, Adaboost_prof) | identical(model, Logistique_prof)) 
+      if (identical(model, Logistique_prof)) #
       {
         errors = etas
         break;
@@ -312,7 +356,7 @@ evaluate_model <- function (df = NULL, model = perceptron, model_test = model_te
   }
   
   mean_error_estimation = mean(error_estimations)
-  return (list(mean_error_estimation = mean_error_estimation)) #, df = result2
+  return (list(eta = best_eta, mean_error_estimation = mean_error_estimation)) #, df = result2
 }
 
 #evaluate_model(df = getDataBase(database = "breast.cancer"), model = perceptron, model_test = model_test)
@@ -325,10 +369,11 @@ Nous allons à présent comparer les performances des modèles Adaline et Percep
 
 
 uci = c("breast.cancer", "ionosphere", "spambase")
-models = c("perceptron", "adaline", "Logistique_prof", "Adaboost_prof")
+models = c("perceptron", "adaline", "regression_logistique", "Adaboost_prof")
 #models = c("Adaboost_prof", "Logistique_prof")
-#models = c("Logistique_prof")
-#models = c("Adaboost_prof")
+#models = c("regression_logistique")
+#models = c("perceptron")
+models = c("Adaboost_prof")
 data = data.frame()
 for(model in models) 
 {
@@ -337,7 +382,7 @@ for(model in models)
   {
     print(model)
     res = evaluate_model(df = getDataBase(database = database), model = get(model), model_test = model_test)
-    data = rbind(data, data.frame(model, database, error = res$mean_error_estimation))
+    data = rbind(data, data.frame(model, database, eta=res$eta, error = res$mean_error_estimation))
   }  
 }
 

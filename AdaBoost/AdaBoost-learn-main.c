@@ -11,10 +11,12 @@ void lire_commande(LR_PARAM *boost_input_params, char *fic_apprentissage, char *
         printf("%s\n",args[i]);
         switch((args[i])[1]){
             case 't': i++; sscanf(args[i],"%ld",&boost_input_params->T); break;
+            case 'e': i++; sscanf(args[i],"%lf",&boost_input_params->eta); break;
             case '?': i++; aide();exit(0); break;
                 
             default : printf("Unknown option %s\n",args[i]);Standby();aide();exit(0);
         }
+        
     }
     if((i+1)>=num_args){
         printf("\n ---------------------------- \n Insufficient number of parameters \n ----------------------------\n\n");

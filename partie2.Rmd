@@ -8,12 +8,23 @@ output: html_document
 Regression logistique
 
 ```{r}
-Hw <- function(X, w, w0) {return (X %*% w + w0) }
-Rm <- function(X, Y, w, w0) { return (mean(log2( 1 + exp( -Y * Hw(X, w, w0)))))}
-Gradient <- function(X, Y, w, w0) {return (-mean(Y * (1 - (1/(1+exp(-Y*Hw(X, w, w0)))) ) * X ))}
 
-#Rm(df$X, df$Y, abs(df$Y)[1:9], 0)
+
 regression_logistique <- function(T = 5000, eta = 1.0, precision = 0.1, X, Y) {
+  Hw <- function(X, w, w0) {return (X %*% w + w0) }
+  Rm <- function(X, Y, w, w0) { return (mean(log2( 1 + exp( -Y * Hw(X, w, w0)))))}
+  Gradient <- function(X, Y, w, w0) {
+    d <- ncol(X)
+    grad = c()
+    #Hw <- function(x, w, w0) {return (x %*% w + w0) }
+    for(j in 1:d)
+    {
+      grad[j] <- mean(-Y*X[,j]*(1-(1/(1+exp(-Y * Hw(X = X, w = w, w0 = w0))))))
+    }
+    
+    return (grad)
+  }
+
   m <- nrow(X)
   d <- ncol(X)
   # Initialisation of the weight vector
@@ -30,16 +41,24 @@ regression_logistique <- function(T = 5000, eta = 1.0, precision = 0.1, X, Y) {
     Rold <- Rm(X = X, Y = Y, w = w, w0 = w0)
     
     gradient <- Gradient(X, Y, w, w0)
-    w <- w - eta * gradient * Rm(X = X, Y = Y, w = w, w0 = w0)
-    w0 <- w0 - eta * 
+
+    w <- w - eta * gradient
+    w0 <- w0 - eta * mean(-Y*(1-(1/(1+exp(-Y * Hw(X = X, w = w, w0 = w0))))))
+    
     Rnew <- Rm(X = X, Y = Y, w = w, w0 = w0)
       
     t <- t + 1
+    
   }
   
   return (list(w0=w0, w=w))
 }
 ```
+
+```{r}
+Gradient(m$X, m$Y, eq$w, eq$w0)
+```
+
 
 
 ```{r}
