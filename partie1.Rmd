@@ -371,4 +371,10 @@ data
 2 Adaboost_prof    ionosphere 0.022727273
 3 Adaboost_prof      spambase 0.167680278
 
+```{r}
+# Graphe a générer
+ggplot(data, aes(model, error, fill=model)) + geom_bar(stat = "identity") + facet_grid(. ~ database)
+
+```
+
 En effet comme ceci à pu être étudié en cours adaline propose une meilleurs minimisation du risque empirique
